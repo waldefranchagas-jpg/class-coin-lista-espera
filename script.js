@@ -22,7 +22,7 @@
 const CONFIG = {
   WHATSAPP_GROUP_URL: "https://chat.whatsapp.com/COLE_SEU_LINK_AQUI",
   WHATSAPP_NUMBER: "",          // ex.: "5511999999999" (usado só se GROUP_URL ficar vazio)
-  LEAD_ENDPOINT: "",            // ex.: "https://formspree.io/f/xxxx" ou seu webhook
+  LEAD_ENDPOINT: "https://script.google.com/macros/s/AKfycbwW5i5BCh06am9Z3V8PCseIt-RZdpVzZNwsXlHRScfco3M2jtkeJ5Y3pbx7lfyKwelDpA/exec", // Planilha Google (Apps Script)
   REDIRECT_DELAY_MS: 1500       // tempo da mensagem de sucesso antes de redirecionar
 };
 
@@ -89,10 +89,15 @@ function buildWhatsAppUrl(lead) {
 async function sendLead(lead) {
   if (!CONFIG.LEAD_ENDPOINT) return;
   try {
+    // text/plain + no-cors evita o preflight de CORS que o Google Apps
+    // Script não responde. É "fire-and-forget": não lemos a resposta,
+    // só garantimos que o POST seja enviado antes do redirect.
     await fetch(CONFIG.LEAD_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(lead)
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(lead),
+      keepalive: true
     });
   } catch (err) {
     console.warn("Falha ao enviar lead para LEAD_ENDPOINT:", err);
